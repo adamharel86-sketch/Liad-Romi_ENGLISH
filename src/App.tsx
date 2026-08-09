@@ -15,6 +15,7 @@ import { WritingPage } from "./pages/WritingPage";
 import { SpeakingPage } from "./pages/SpeakingPage";
 import { AchievementsPage } from "./pages/AchievementsPage";
 import { ParentsPage } from "./pages/ParentsPage";
+import { ParentGate } from "./components/parents/ParentGate";
 
 function RequireStudentAndOnboarding({ children }: { children: React.ReactNode }) {
   const { activeStudent } = useStudentContext();
@@ -34,7 +35,14 @@ export default function App() {
   return (
     <Routes>
       <Route path="/welcome" element={<WelcomePage />} />
-      <Route path="/parents" element={<ParentsPage />} />
+      <Route
+        path="/parents"
+        element={
+          <ParentGate>
+            <ParentsPage />
+          </ParentGate>
+        }
+      />
       <Route
         path="/placement"
         element={
