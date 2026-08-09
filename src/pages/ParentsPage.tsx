@@ -6,7 +6,7 @@ import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Pill } from "../components/ui/Pill";
 import { ProgressBar } from "../components/ui/ProgressBar";
-import { getPlacementResult, getProgress, listConversations, listSpeakingAttempts, listWritingAttempts } from "../data/store/repository";
+import { getPlacementResult, getProgress, listConversations, listSpeakingAttempts, listWritingAttempts, updateStudent } from "../data/store/repository";
 import { generateParentReport } from "../services/ai/aiService";
 import { todayISODate } from "../data/store/localStore";
 
@@ -24,9 +24,11 @@ const SKILL_LABELS_HE: Record<string, string> = {
 };
 
 export function ParentsPage() {
-  const { students } = useStudentContext();
+  const { students, refreshStudents } = useStudentContext();
   const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(students[0]?.id ?? null);
+  const [renaming, setRenaming] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
 
   const activeChild = students.find((s) => s.id === selectedId) ?? students[0];
 
@@ -36,6 +38,20 @@ export function ParentsPage() {
         <p className="text-ink-500">אין עדיין פרופילים. חזרו למסך הבחירה.</p>
       </div>
     );
+  }
+
+  function startRename() {
+    setNameDraft(activeChild.name);
+    setRenaming(true);
+  }
+
+  function saveRename() {
+    const trimmed = nameDraft.trim();
+    if (trimmed && trimmed !== activeChild.name) {
+      updateStudent(activeChild.id, { name: trimmed });
+      refreshStudents();
+    }
+    setRenaming(false);
   }
 
   return (
@@ -65,6 +81,37 @@ export function ParentsPage() {
             </button>
           ))}
         </div>
+
+        {/* Rename the selected child */}
+        <Card className="mb-6 flex items-center gap-3 py-3.5">
+          <span className="text-3xl">{activeChild.avatar}</span>
+          {renaming ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                saveRename();
+              }}
+              className="flex flex-1 items-center gap-2"
+            >
+              <input
+                autoFocus
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                className="flex-1 min-w-0 rounded-xl border border-ink-300/30 px-3 py-2 font-bold text-ink-900 focus:border-brand-500 outline-none"
+              />
+              <Button size="sm" type="submit">שמירה</Button>
+              <Button size="sm" variant="ghost" type="button" onClick={() => setRenaming(false)}>ביטול</Button>
+            </form>
+          ) : (
+            <>
+              <div className="flex-1">
+                <div className="font-bold text-lg text-ink-900">{activeChild.name}</div>
+                <div className="text-ink-500 text-sm">{GRADE_LABEL_HE[activeChild.grade]}</div>
+              </div>
+              <Button size="sm" variant="ghost" onClick={startRename}>✏️ שינוי שם</Button>
+            </>
+          )}
+        </Card>
 
         <ChildReport child={activeChild} />
       </div>
